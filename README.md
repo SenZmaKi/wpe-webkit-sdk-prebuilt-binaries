@@ -22,11 +22,10 @@ application bundle, so end users do not install this SDK.
 The defaults intentionally follow the current upstream Linux backend build
 instructions: **WPE WebKit 2.50.4** and **libwpe 1.16.3**, using the modern
 WPE Platform headless backend. It deliberately disables DRM/Wayland platform
-backends, speech synthesis, media, and optional image/font features: none are
-required by the Flutter plugin's offscreen backend, and this keeps memory and
-compile time practical. The workflow exposes both version inputs so a new
-upstream-supported pair can be rebuilt and published without changing this
-repository.
+backends, speech synthesis, web audio, and optional image/font features. Video
+remains enabled because this WPE WebKit release uses its frame types in the
+WebGL build. The workflow exposes both version inputs so a new upstream-
+supported pair can be rebuilt and published without changing this repository.
 
 ## Publishing
 

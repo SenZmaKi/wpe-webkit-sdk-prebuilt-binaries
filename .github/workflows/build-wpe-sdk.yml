@@ -59,13 +59,32 @@ jobs:
           [[ "$BUILD_JOBS" =~ ^[1-9][0-9]*$ ]]
           (( BUILD_JOBS <= 2 )) || { echo 'build_jobs must be at most 2' >&2; exit 64; }
 
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: wpe-${{ runner.os }}-${{ matrix.architecture }}-${{ inputs.webkit_version }}-${{ inputs.libwpe_version }}-${{ github.sha }}
+          restore-keys: |
+            wpe-${{ runner.os }}-${{ matrix.architecture }}-${{ inputs.webkit_version }}-${{ inputs.libwpe_version }}-
+
+      - name: Configure compiler cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.cache/ccache
+          ccache --set-config=base_dir="$RUNNER_TEMP"
+          ccache --set-config=compiler_check=content
+          ccache --set-config=compression=true
+          ccache --set-config=max_size=4G
+          ccache --show-config
+
       - name: Install build dependencies
         shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
-            bison bubblewrap build-essential cmake flex gperf ninja-build pkg-config python3 ruby ruby-dev unifdef \
+            bison bubblewrap build-essential ccache cmake flex gperf ninja-build pkg-config python3 ruby ruby-dev unifdef \
             libatk-bridge2.0-dev libatk1.0-dev libavif-dev libdrm-dev libegl1-mesa-dev libenchant-2-dev libepoxy-dev \
             libfontconfig1-dev libfreetype6-dev libgbm-dev libgcrypt20-dev libglib2.0-dev libgstreamer1.0-dev \
             libgstreamer-plugins-base1.0-dev libharfbuzz-dev libharfbuzz-icu0 libhyphen-dev libicu-dev libjpeg-dev \
@@ -102,9 +121,10 @@ jobs:
           cd "$RUNNER_TEMP/wpe-source/wpewebkit-${WEBKIT_VERSION}"
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DPORT=WPE \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DENABLE_DOCUMENTATION=OFF -DENABLE_INTROSPECTION=OFF \
             -DENABLE_BUBBLEWRAP_SANDBOX=OFF -DENABLE_WEBDRIVER=OFF -DENABLE_MINIBROWSER=OFF \
-            -DENABLE_SPEECH_SYNTHESIS=OFF -DENABLE_VIDEO=OFF -DENABLE_WEB_AUDIO=OFF \
+            -DENABLE_SPEECH_SYNTHESIS=OFF -DENABLE_WEB_AUDIO=OFF \
             -DENABLE_JOURNALD_LOG=OFF -DENABLE_GAMEPAD=OFF \
             -DENABLE_WPE_PLATFORM=ON -DENABLE_WPE_PLATFORM_HEADLESS=ON \
             -DENABLE_WPE_PLATFORM_DRM=OFF -DENABLE_WPE_PLATFORM_WAYLAND=OFF \
@@ -117,6 +137,7 @@ jobs:
           set -euo pipefail
           cd "$RUNNER_TEMP/wpe-source/wpewebkit-${WEBKIT_VERSION}"
           cmake --build build --parallel "$BUILD_JOBS"
+          ccache --show-stats
 
       - name: Install WPE WebKit
         shell: bash
