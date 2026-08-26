@@ -103,10 +103,11 @@ jobs:
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DPORT=WPE \
             -DENABLE_DOCUMENTATION=OFF -DENABLE_INTROSPECTION=OFF \
-            -DENABLE_BUBBLEWRAP_SANDBOX=ON -DENABLE_WEBDRIVER=OFF -DENABLE_MINIBROWSER=OFF \
-            -DENABLE_SPEECH_SYNTHESIS=OFF \
-            -DUSE_AVIF=ON -DUSE_WOFF2=ON -DUSE_JPEGXL=ON \
-            -DENABLE_WPE_PLATFORM=ON -DENABLE_WPE_PLATFORM_HEADLESS=ON
+            -DENABLE_BUBBLEWRAP_SANDBOX=OFF -DENABLE_WEBDRIVER=OFF -DENABLE_MINIBROWSER=OFF \
+            -DENABLE_SPEECH_SYNTHESIS=OFF -DENABLE_VIDEO=OFF -DENABLE_WEB_AUDIO=OFF \
+            -DENABLE_WPE_PLATFORM=ON -DENABLE_WPE_PLATFORM_HEADLESS=ON \
+            -DENABLE_WPE_PLATFORM_DRM=OFF -DENABLE_WPE_PLATFORM_WAYLAND=OFF \
+            -DUSE_AVIF=OFF -DUSE_WOFF2=OFF -DUSE_JPEGXL=OFF -DUSE_LCMS=OFF -DUSE_ATK=OFF
           cmake --build build --parallel "$BUILD_JOBS"
           sudo cmake --install build
           sudo ldconfig
@@ -130,7 +131,7 @@ jobs:
           tar -C "$sdk_root" -cJf "$release_dir/$archive" usr
           (cd "$release_dir" && sha256sum "$archive" > "$archive.sha256")
           jq -n --arg webkitVersion "$WEBKIT_VERSION" --arg libwpeVersion "$LIBWPE_VERSION" --arg architecture "$ARCHITECTURE" \
-            '{webkitVersion: $webkitVersion, libwpeVersion: $libwpeVersion, architecture: $architecture, installPrefix: "/usr/local", configureFlags: "PORT=WPE ENABLE_WPE_PLATFORM ENABLE_WPE_PLATFORM_HEADLESS"}' \
+            '{webkitVersion: $webkitVersion, libwpeVersion: $libwpeVersion, architecture: $architecture, installPrefix: "/usr/local", configureFlags: "PORT=WPE ENABLE_WPE_PLATFORM ENABLE_WPE_PLATFORM_HEADLESS (headless-only, media and optional codecs disabled)"}' \
             > "$release_dir/$archive.metadata.json"
           tar -tJf "$release_dir/$archive" | grep -q '/libWPEWebKit-2.0\.so'
           tar -tJf "$release_dir/$archive" | grep -q '/wpe-platform-headless-2.0\.pc'
