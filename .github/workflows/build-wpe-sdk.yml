@@ -95,7 +95,7 @@ jobs:
           sudo ldconfig
           pkg-config --modversion wpe-1.0
 
-      - name: Build and install WPE WebKit
+      - name: Configure WPE WebKit
         shell: bash
         run: |
           set -euo pipefail
@@ -110,7 +110,19 @@ jobs:
             -DENABLE_WPE_PLATFORM_DRM=OFF -DENABLE_WPE_PLATFORM_WAYLAND=OFF \
             -DUSE_AVIF=OFF -DUSE_WOFF2=OFF -DUSE_JPEGXL=OFF -DUSE_LCMS=OFF -DUSE_ATK=OFF \
             -DUSE_LIBBACKTRACE=OFF
+
+      - name: Compile WPE WebKit
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/wpe-source/wpewebkit-${WEBKIT_VERSION}"
           cmake --build build --parallel "$BUILD_JOBS"
+
+      - name: Install WPE WebKit
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/wpe-source/wpewebkit-${WEBKIT_VERSION}"
           sudo cmake --install build
           sudo ldconfig
           test "$(pkg-config --modversion wpe-webkit-2.0)" = "$WEBKIT_VERSION"
