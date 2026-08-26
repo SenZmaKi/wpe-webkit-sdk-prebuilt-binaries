@@ -60,7 +60,8 @@ jobs:
           (( BUILD_JOBS <= 2 )) || { echo 'build_jobs must be at most 2' >&2; exit 64; }
 
       - name: Restore compiler cache
-        uses: actions/cache@v4
+        id: compiler-cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ccache
           key: wpe-${{ runner.os }}-${{ matrix.architecture }}-${{ inputs.webkit_version }}-${{ inputs.libwpe_version }}-${{ github.sha }}
@@ -73,10 +74,10 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
-            bison bubblewrap build-essential ccache cmake flex gperf ninja-build pkg-config python3 ruby ruby-dev unifdef \
-            libatk-bridge2.0-dev libatk1.0-dev libavif-dev libdrm-dev libegl1-mesa-dev libenchant-2-dev libepoxy-dev \
-            libfontconfig1-dev libfreetype6-dev libgbm-dev libgcrypt20-dev libglib2.0-dev libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev libharfbuzz-dev libharfbuzz-icu0 libhyphen-dev libicu-dev libjpeg-dev \
+            bison bubblewrap build-essential ccache cmake file flex gperf ninja-build pkg-config python3 ruby ruby-dev unifdef \
+            libatk-bridge2.0-dev libatk1.0-dev libavif-dev libegl1-mesa-dev libenchant-2-dev libepoxy-dev \
+            libfontconfig1-dev libfreetype6-dev libgcrypt20-dev libglib2.0-dev \
+            libharfbuzz-dev libharfbuzz-icu0 libhyphen-dev libicu-dev libjpeg-dev \
             libjxl-dev liblcms2-dev libopenjp2-7-dev libpng-dev libpsl-dev libsecret-1-dev libsoup-3.0-dev \
             libsqlite3-dev libssl-dev libtasn1-6-dev libunwind-dev libwayland-dev libwebp-dev libwoff-dev \
             libxkbcommon-dev libxml2-dev libxslt1-dev libzstd-dev wayland-protocols
@@ -125,9 +126,14 @@ jobs:
             -DENABLE_DOCUMENTATION=OFF -DENABLE_INTROSPECTION=OFF \
             -DENABLE_BUBBLEWRAP_SANDBOX=OFF -DENABLE_WEBDRIVER=OFF -DENABLE_MINIBROWSER=OFF \
             -DENABLE_SPEECH_SYNTHESIS=OFF -DENABLE_WEB_AUDIO=OFF \
+            -DENABLE_VIDEO=OFF -DENABLE_WEBGL=OFF -DENABLE_GPU_PROCESS=OFF \
+            -DENABLE_MEDIA_SOURCE=OFF -DENABLE_MEDIA_STREAM=OFF -DENABLE_MEDIA_RECORDER=OFF \
+            -DENABLE_MEDIA_SESSION=OFF -DENABLE_WEB_CODECS=OFF -DENABLE_ENCRYPTED_MEDIA=OFF \
+            -DENABLE_OFFSCREEN_CANVAS=OFF -DENABLE_OFFSCREEN_CANVAS_IN_WORKERS=OFF \
             -DENABLE_JOURNALD_LOG=OFF -DENABLE_GAMEPAD=OFF \
             -DENABLE_WPE_PLATFORM=ON -DENABLE_WPE_PLATFORM_HEADLESS=ON \
             -DENABLE_WPE_PLATFORM_DRM=OFF -DENABLE_WPE_PLATFORM_WAYLAND=OFF \
+            -DUSE_GBM=OFF -DUSE_LIBDRM=OFF \
             -DUSE_AVIF=OFF -DUSE_WOFF2=OFF -DUSE_JPEGXL=OFF -DUSE_LCMS=OFF -DUSE_ATK=OFF \
             -DUSE_LIBBACKTRACE=OFF
 
@@ -138,6 +144,13 @@ jobs:
           cd "$RUNNER_TEMP/wpe-source/wpewebkit-${WEBKIT_VERSION}"
           cmake --build build --parallel "$BUILD_JOBS"
           ccache --show-stats
+
+      - name: Save compiler cache
+        if: ${{ steps.compiler-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ccache
+          key: ${{ steps.compiler-cache.outputs.cache-primary-key }}
 
       - name: Install WPE WebKit
         shell: bash
@@ -152,8 +165,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          archive="Senpwai-WPE-SDK-${WEBKIT_VERSION}-linux-${ARCHITECTURE}.tar.xz"
           sdk_root="$RUNNER_TEMP/sdk-root"
+          runtime_root="$RUNNER_TEMP/runtime-root"
           release_dir="$GITHUB_WORKSPACE/release-assets"
           # The WebKit build tree is substantially larger than the installed
           # SDK. Remove it before creating the compressed release archive so
@@ -161,21 +174,40 @@ jobs:
           rm -rf "$RUNNER_TEMP/wpe-source"
           sudo apt-get clean
           df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
-          mkdir -p "$sdk_root/usr/local/include" "$sdk_root/usr/local/share" "$release_dir"
+          sdk_archive="Senpwai-WPE-SDK-${WEBKIT_VERSION}-linux-${ARCHITECTURE}.tar.xz"
+          runtime_archive="Senpwai-WPE-Runtime-${WEBKIT_VERSION}-linux-${ARCHITECTURE}.tar.xz"
+          mkdir -p \
+            "$sdk_root/usr/local/include" "$sdk_root/usr/local/lib" \
+            "$runtime_root/usr/local/lib" "$runtime_root/usr/local/libexec" "$runtime_root/usr/local/share" \
+            "$release_dir"
           cp -a /usr/local/include/wpe-1.0 /usr/local/include/wpe-webkit-2.0 "$sdk_root/usr/local/include/"
-          cp -a /usr/local/share/wpe-webkit-2.0 "$sdk_root/usr/local/share/"
           while IFS= read -r -d '' file; do
             relative="${file#/usr/local/}"
             mkdir -p "$sdk_root/usr/local/$(dirname "$relative")"
             cp -a "$file" "$sdk_root/usr/local/$relative"
+            if [[ "$file" != *.pc ]]; then
+              mkdir -p "$runtime_root/usr/local/$(dirname "$relative")"
+              cp -a "$file" "$runtime_root/usr/local/$relative"
+            fi
           done < <(find /usr/local/lib \( -type f -o -type l \) \( -name 'libWPEWebKit*' -o -name 'libwpe*' -o -name 'wpe*.pc' \) -print0)
-          tar -C "$sdk_root" -cJf "$release_dir/$archive" usr
-          (cd "$release_dir" && sha256sum "$archive" > "$archive.sha256")
-          jq -n --arg webkitVersion "$WEBKIT_VERSION" --arg libwpeVersion "$LIBWPE_VERSION" --arg architecture "$ARCHITECTURE" \
-            '{webkitVersion: $webkitVersion, libwpeVersion: $libwpeVersion, architecture: $architecture, installPrefix: "/usr/local", configureFlags: "PORT=WPE ENABLE_WPE_PLATFORM ENABLE_WPE_PLATFORM_HEADLESS (headless-only, media and optional codecs disabled)"}' \
-            > "$release_dir/$archive.metadata.json"
-          tar -tJf "$release_dir/$archive" | grep -q '/libWPEWebKit-2.0\.so'
-          tar -tJf "$release_dir/$archive" | grep -q '/wpe-platform-headless-2.0\.pc'
+          cp -a /usr/local/libexec/wpe-webkit-2.0 "$runtime_root/usr/local/libexec/"
+          cp -a /usr/local/share/wpe-webkit-2.0 "$runtime_root/usr/local/share/"
+          find "$runtime_root" -type f -exec sh -c 'file -b "$1" | grep -q ELF && strip --strip-unneeded "$1" || true' _ {} \;
+          for archive in "$sdk_archive" "$runtime_archive"; do
+            root="$sdk_root"
+            [[ "$archive" == "$runtime_archive" ]] && root="$runtime_root"
+            tar -C "$root" -cJf "$release_dir/$archive" usr
+            (cd "$release_dir" && sha256sum "$archive" > "$archive.sha256")
+            jq -n --arg webkitVersion "$WEBKIT_VERSION" --arg libwpeVersion "$LIBWPE_VERSION" --arg architecture "$ARCHITECTURE" \
+              --arg kind "$([[ "$archive" == "$sdk_archive" ]] && printf sdk || printf runtime)" \
+              '{kind: $kind, webkitVersion: $webkitVersion, libwpeVersion: $libwpeVersion, architecture: $architecture, installPrefix: "/usr/local", featureProfile: "headless-no-media-no-webgl"}' \
+              > "$release_dir/$archive.metadata.json"
+          done
+          tar -tJf "$release_dir/$sdk_archive" > "$RUNNER_TEMP/sdk-archive.list"
+          tar -tJf "$release_dir/$runtime_archive" > "$RUNNER_TEMP/runtime-archive.list"
+          grep -q '/wpe-webkit-2.0\.pc' "$RUNNER_TEMP/sdk-archive.list"
+          grep -q '/libWPEWebKit-2.0\.so' "$RUNNER_TEMP/runtime-archive.list"
+          grep -q '/WPEWebProcess' "$RUNNER_TEMP/runtime-archive.list"
 
       - name: Upload architecture artifact
         uses: actions/upload-artifact@v4

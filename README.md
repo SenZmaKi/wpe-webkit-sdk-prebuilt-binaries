@@ -3,10 +3,14 @@
 Versioned Linux SDK/runtime archives for Flutter apps using
 [`flutter_inappwebview_linux`](https://pub.dev/packages/flutter_inappwebview_linux).
 
-Each prerelease contains native `x86_64` and `aarch64` archives with the WPE
-WebKit shared library, libwpe, WPE Platform metadata, headers, pkg-config files,
-and the WPE inspector resource. Extract an archive at `/` before running
-`flutter build linux`:
+Each prerelease contains separate native `x86_64` and `aarch64` artifacts:
+
+- The SDK contains headers, pkg-config metadata, and linkable libraries used by
+  `flutter build linux`.
+- The stripped runtime contains shared libraries, WebKit subprocesses, and
+  resources bundled with the resulting application.
+
+Extract the SDK at `/` before running a Flutter build:
 
 ```sh
 sudo tar -xJf Senpwai-WPE-SDK-<version>-linux-<architecture>.tar.xz -C /
@@ -14,18 +18,19 @@ sudo ldconfig
 flutter build linux --release
 ```
 
-The Flutter plugin copies the required WPE shared libraries into the resulting
-application bundle, so end users do not install this SDK.
+The SDK is not distributed to end users. Packaging workflows bundle the
+matching `Senpwai-WPE-Runtime-*` archive with the application.
 
 ## Supported baseline
 
 The defaults intentionally follow the current upstream Linux backend build
 instructions: **WPE WebKit 2.50.4** and **libwpe 1.16.3**, using the modern
 WPE Platform headless backend. It deliberately disables DRM/Wayland platform
-backends, speech synthesis, web audio, and optional image/font features. Video
-remains enabled because this WPE WebKit release uses its frame types in the
-WebGL build. The workflow exposes both version inputs so a new upstream-
-supported pair can be rebuilt and published without changing this repository.
+backends, GPU/WebGL, video/media, speech synthesis, web audio, and optional
+image/font features. Disabling WebGL alongside video avoids the ANGLE
+dependency on video frame types encountered when video alone was disabled. The
+workflow exposes both version inputs so a new upstream-supported pair can be
+rebuilt and published without changing this repository.
 
 ## Publishing
 
