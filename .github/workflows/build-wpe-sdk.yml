@@ -108,7 +108,8 @@ jobs:
             -DENABLE_JOURNALD_LOG=OFF -DENABLE_GAMEPAD=OFF \
             -DENABLE_WPE_PLATFORM=ON -DENABLE_WPE_PLATFORM_HEADLESS=ON \
             -DENABLE_WPE_PLATFORM_DRM=OFF -DENABLE_WPE_PLATFORM_WAYLAND=OFF \
-            -DUSE_AVIF=OFF -DUSE_WOFF2=OFF -DUSE_JPEGXL=OFF -DUSE_LCMS=OFF -DUSE_ATK=OFF
+            -DUSE_AVIF=OFF -DUSE_WOFF2=OFF -DUSE_JPEGXL=OFF -DUSE_LCMS=OFF -DUSE_ATK=OFF \
+            -DUSE_LIBBACKTRACE=OFF
           cmake --build build --parallel "$BUILD_JOBS"
           sudo cmake --install build
           sudo ldconfig
