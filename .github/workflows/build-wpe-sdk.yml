@@ -67,17 +67,6 @@ jobs:
           restore-keys: |
             wpe-${{ runner.os }}-${{ matrix.architecture }}-${{ inputs.webkit_version }}-${{ inputs.libwpe_version }}-
 
-      - name: Configure compiler cache
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p ~/.cache/ccache
-          ccache --set-config=base_dir="$RUNNER_TEMP"
-          ccache --set-config=compiler_check=content
-          ccache --set-config=compression=true
-          ccache --set-config=max_size=4G
-          ccache --show-config
-
       - name: Install build dependencies
         shell: bash
         run: |
@@ -91,6 +80,17 @@ jobs:
             libjxl-dev liblcms2-dev libopenjp2-7-dev libpng-dev libpsl-dev libsecret-1-dev libsoup-3.0-dev \
             libsqlite3-dev libssl-dev libtasn1-6-dev libunwind-dev libwayland-dev libwebp-dev libwoff-dev \
             libxkbcommon-dev libxml2-dev libxslt1-dev libzstd-dev wayland-protocols
+
+      - name: Configure compiler cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.cache/ccache
+          ccache --set-config=base_dir="$RUNNER_TEMP"
+          ccache --set-config=compiler_check=content
+          ccache --set-config=compression=true
+          ccache --set-config=max_size=4G
+          ccache --show-config
 
       - name: Download source releases
         shell: bash
