@@ -155,6 +155,12 @@ jobs:
           archive="Senpwai-WPE-SDK-${WEBKIT_VERSION}-linux-${ARCHITECTURE}.tar.xz"
           sdk_root="$RUNNER_TEMP/sdk-root"
           release_dir="$GITHUB_WORKSPACE/release-assets"
+          # The WebKit build tree is substantially larger than the installed
+          # SDK. Remove it before creating the compressed release archive so
+          # the hosted runner has enough free workspace for the archive.
+          rm -rf "$RUNNER_TEMP/wpe-source"
+          sudo apt-get clean
+          df -h "$RUNNER_TEMP" "$GITHUB_WORKSPACE"
           mkdir -p "$sdk_root/usr/local/include" "$sdk_root/usr/local/share" "$release_dir"
           cp -a /usr/local/include/wpe-1.0 /usr/local/include/wpe-webkit-2.0 "$sdk_root/usr/local/include/"
           cp -a /usr/local/share/wpe-webkit-2.0 "$sdk_root/usr/local/share/"
