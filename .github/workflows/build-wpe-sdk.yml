@@ -200,6 +200,7 @@ jobs:
               cp -a "$file" "$runtime_root/usr/local/$relative"
             fi
           done < <(find /usr/local/lib \( -type f -o -type l \) \( -name 'libWPEWebKit*' -o -name 'libwpe*' -o -name 'wpe*.pc' \) -print0)
+          cp -a /usr/local/lib/wpe-webkit-2.0 "$runtime_root/usr/local/lib/"
           cp -a /usr/local/libexec/wpe-webkit-2.0 "$runtime_root/usr/local/libexec/"
           cp -a /usr/local/share/wpe-webkit-2.0 "$runtime_root/usr/local/share/"
           "$GITHUB_WORKSPACE/scripts/collect-runtime-dependencies.sh" "$runtime_root"
@@ -218,6 +219,7 @@ jobs:
           tar -tJf "$release_dir/$runtime_archive" > "$RUNNER_TEMP/runtime-archive.list"
           grep -q '/wpe-webkit-2.0\.pc' "$RUNNER_TEMP/sdk-archive.list"
           grep -q '/libWPEWebKit-2.0\.so' "$RUNNER_TEMP/runtime-archive.list"
+          grep -q '/wpe-webkit-2.0/injected-bundle/libWPEInjectedBundle\.so' "$RUNNER_TEMP/runtime-archive.list"
           grep -q '/WPEWebProcess' "$RUNNER_TEMP/runtime-archive.list"
           grep -q '/libicui18n\.so' "$RUNNER_TEMP/runtime-archive.list"
           grep -q '/libicuuc\.so' "$RUNNER_TEMP/runtime-archive.list"
