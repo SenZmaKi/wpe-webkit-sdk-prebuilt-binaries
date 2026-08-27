@@ -218,7 +218,7 @@ jobs:
           grep -q '/libxml2\.so' "$RUNNER_TEMP/runtime-archive.list"
           grep -q '/wpe-webkit-runtime/bundled-libraries\.txt' "$RUNNER_TEMP/runtime-archive.list"
           grep -q '/wpe-webkit-runtime/host-libraries\.txt' "$RUNNER_TEMP/runtime-archive.list"
-          ! grep -Eq '/lib(glib-2\.0|gio-2\.0|gmodule-2\.0|gobject-2\.0|secret-1|gtk-3|gdk-3|pango-1\.0|cairo)\.so' \
+          ! grep -Eq '/lib(glib-2\.0|gio-2\.0|gmodule-2\.0|gobject-2\.0|secret-1|gtk-3|gdk-3|pango-1\.0|cairo|mount|blkid|ffi|pcre2-8|selinux)\.so' \
             "$RUNNER_TEMP/runtime-archive.list"
 
       - name: Upload architecture artifact

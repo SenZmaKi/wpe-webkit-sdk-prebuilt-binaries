@@ -43,7 +43,10 @@ is_host_library() {
     libpango-1.0.so.0|libpangocairo-1.0.so.0|libpangoft2-1.0.so.0|\
     libcairo.so.2|libcairo-gobject.so.2|libgdk_pixbuf-2.0.so.0|\
     libepoxy.so.0|libxkbcommon.so.0|libXcomposite.so.1|libXdamage.so.1|\
-    libXext.so.6|libXfixes.so.3|libXi.so.6|libXrender.so.1)
+    libXext.so.6|libXfixes.so.3|libXi.so.6|libXrender.so.1|\
+    libatomic.so.1|libblkid.so.1|libbrotlicommon.so.1|libbrotlidec.so.1|\
+    libbz2.so.1.0|libffi.so.8|libgcrypt.so.20|libgraphite2.so.3|\
+    libmount.so.1|libpcre2-8.so.0|libpng16.so.16|libselinux.so.1)
       return 0
       ;;
     *)
