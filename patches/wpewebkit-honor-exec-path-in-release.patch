@@ -1,0 +1,36 @@
+diff --git a/Source/WebKit/Shared/glib/ProcessExecutablePathGLib.cpp b/Source/WebKit/Shared/glib/ProcessExecutablePathGLib.cpp
+index 7f16913581ca..153c1814c493 100644
+--- a/Source/WebKit/Shared/glib/ProcessExecutablePathGLib.cpp
++++ b/Source/WebKit/Shared/glib/ProcessExecutablePathGLib.cpp
+@@ -45,7 +45,6 @@ static String getExecutablePath()
+ 
+ static String findWebKitProcess(const char* processName)
+ {
+-#if ENABLE(DEVELOPER_MODE)
+     static const char* execDirectory = g_getenv("WEBKIT_EXEC_PATH");
+     if (execDirectory) {
+         String processPath = FileSystem::pathByAppendingComponent(FileSystem::stringFromFileSystemRepresentation(execDirectory), StringView::fromLatin1(processName));
+@@ -53,6 +52,7 @@ static String findWebKitProcess(const char* processName)
+             return processPath;
+     }
+ 
++#if ENABLE(DEVELOPER_MODE)
+     static String executablePath = getExecutablePath();
+     if (!executablePath.isNull()) {
+         String processPath = FileSystem::pathByAppendingComponent(executablePath, StringView::fromLatin1(processName));
+*** Update File: /home/sen/Dev/wpe-webkit-sdk-prebuilt-binaries/.github/workflows/build-wpe-sdk.yml
+@@
+           tar -xJf "$source_dir/libwpe.tar.xz" -C "$source_dir"
+           tar -xJf "$source_dir/wpewebkit.tar.xz" -C "$source_dir"
++          cd "$source_dir/wpewebkit-${WEBKIT_VERSION}"
++          patch --strip=1 < "$GITHUB_WORKSPACE/patches/wpewebkit-honor-exec-path-in-release.patch"
++          test "$(grep -n 'static const char\* execDirectory = g_getenv("WEBKIT_EXEC_PATH")' \
++            Source/WebKit/Shared/glib/ProcessExecutablePathGLib.cpp | cut -d: -f1)" -lt \
++            "$(grep -n '^#if ENABLE(DEVELOPER_MODE)' \
++              Source/WebKit/Shared/glib/ProcessExecutablePathGLib.cpp | tail -n 1 | cut -d: -f1)"
+*** Update File: /home/sen/Dev/wpe-webkit-sdk-prebuilt-binaries/README.md
+@@
+ includes `bundled-libraries.txt` and `host-libraries.txt` audit manifests.
++The WPE source is patched so release builds honor `WEBKIT_EXEC_PATH`; packaged
++applications can therefore launch `WPEWebProcess` and `WPENetworkProcess`
++from their private runtime rather than the compile-time `/usr/local` prefix.
