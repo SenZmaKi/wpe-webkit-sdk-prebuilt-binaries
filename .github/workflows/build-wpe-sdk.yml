@@ -14,7 +14,7 @@ on:
         default: "1.16.3"
         type: string
       release_tag:
-        description: Prerelease tag that receives the SDK assets
+        description: Release tag that receives the SDK assets
         required: true
         default: "wpe-sdk-2.50.4"
         type: string
@@ -239,7 +239,7 @@ jobs:
           retention-days: 90
 
   publish:
-    name: Publish SDK prerelease
+    name: Publish SDK release
     needs: build
     runs-on: ubuntu-24.04
     env:
@@ -255,12 +255,12 @@ jobs:
           path: release-assets
           merge-multiple: true
 
-      - name: Publish prerelease assets
+      - name: Publish release assets
         shell: bash
         run: |
           set -euo pipefail
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --prerelease \
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
               --title "WPE WebKit SDK $WEBKIT_VERSION" \
               --notes "flutter_inappwebview_linux baseline: WPE WebKit $WEBKIT_VERSION and libwpe $LIBWPE_VERSION. Native x86_64 and aarch64 SDK/runtime archives."
           fi

@@ -3,7 +3,7 @@
 Versioned Linux SDK/runtime archives for Flutter apps using
 [`flutter_inappwebview_linux`](https://pub.dev/packages/flutter_inappwebview_linux).
 
-Each prerelease contains separate native `x86_64` and `aarch64` artifacts:
+Each release contains separate native `x86_64` and `aarch64` artifacts:
 
 - The SDK contains headers, pkg-config metadata, and linkable libraries used by
   `flutter build linux`.
@@ -51,8 +51,5 @@ rebuilt and published without changing this repository.
 Run **Build WPE WebKit SDK** from Actions. It builds natively on
 `ubuntu-24.04` (`x86_64`) and `ubuntu-24.04-arm` (`aarch64`), produces checksums
 and machine-readable metadata, and publishes/replaces the assets on the chosen
-prerelease tag. Start with two compilation jobs per architecture; WPE WebKit is
+release tag. Start with two compilation jobs per architecture; WPE WebKit is
 memory intensive.
-
-The `wpe-sdk-2.53.3-local` release is a migrated, locally validated Senpwai
-build for compatibility testing. It is not the documented plugin baseline.
