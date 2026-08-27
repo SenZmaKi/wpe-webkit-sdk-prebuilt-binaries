@@ -31,6 +31,9 @@ not represented in the runtime archive. The GLib/GTK/libsecret/Pango/Cairo
 desktop stack is explicitly host-provided so the runtime cannot override a
 newer distribution's internally consistent desktop libraries. Every archive
 includes `bundled-libraries.txt` and `host-libraries.txt` audit manifests.
+The WPE source is patched so release builds honor `WEBKIT_EXEC_PATH`; packaged
+applications can therefore launch `WPEWebProcess` and `WPENetworkProcess`
+from their private runtime rather than the compile-time `/usr/local` prefix.
 
 ## Supported baseline
 

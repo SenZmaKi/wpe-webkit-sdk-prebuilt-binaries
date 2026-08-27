@@ -106,6 +106,13 @@ jobs:
           curl --fail --location --retry 4 --retry-all-errors "https://wpewebkit.org/releases/wpewebkit-${WEBKIT_VERSION}.tar.xz" --output "$source_dir/wpewebkit.tar.xz"
           tar -xJf "$source_dir/libwpe.tar.xz" -C "$source_dir"
           tar -xJf "$source_dir/wpewebkit.tar.xz" -C "$source_dir"
+          cd "$source_dir/wpewebkit-${WEBKIT_VERSION}"
+          patch --strip=1 < "$GITHUB_WORKSPACE/patches/wpewebkit-honor-exec-path-in-release.patch"
+          exec_path_line="$(grep -n 'static const char\* execDirectory = g_getenv("WEBKIT_EXEC_PATH")' \
+            Source/WebKit/Shared/glib/ProcessExecutablePathGLib.cpp | cut -d: -f1)"
+          developer_guard_line="$(grep -n '^#if ENABLE(DEVELOPER_MODE)' \
+            Source/WebKit/Shared/glib/ProcessExecutablePathGLib.cpp | tail -n 1 | cut -d: -f1)"
+          test "$exec_path_line" -lt "$developer_guard_line"
 
       - name: Build and install libwpe
         shell: bash
