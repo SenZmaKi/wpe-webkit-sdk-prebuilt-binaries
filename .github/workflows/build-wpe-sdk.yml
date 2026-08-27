@@ -51,7 +51,7 @@ jobs:
       ARCHITECTURE: ${{ matrix.architecture }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Validate inputs
         shell: bash
@@ -231,7 +231,7 @@ jobs:
             "$RUNNER_TEMP/runtime-archive.list"
 
       - name: Upload architecture artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wpe-sdk-${{ inputs.webkit_version }}-${{ matrix.architecture }}
           path: release-assets/
@@ -249,7 +249,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Download SDK assets
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: wpe-sdk-${{ inputs.webkit_version }}-*
           path: release-assets
