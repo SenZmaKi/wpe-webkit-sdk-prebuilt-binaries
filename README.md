@@ -7,8 +7,10 @@ Each prerelease contains separate native `x86_64` and `aarch64` artifacts:
 
 - The SDK contains headers, pkg-config metadata, and linkable libraries used by
   `flutter build linux`.
-- The stripped runtime contains shared libraries, WebKit subprocesses, and
-  resources bundled with the resulting application.
+- The stripped runtime contains shared libraries, WebKit subprocesses,
+  resources, and the recursive non-host dependency closure bundled with the
+  resulting application. Core system, graphics, display, audio, and driver
+  libraries remain supplied by the target Linux installation.
 
 Extract the SDK at `/` before running a Flutter build:
 
@@ -20,6 +22,12 @@ flutter build linux --release
 
 The SDK is not distributed to end users. Packaging workflows bundle the
 matching `Senpwai-WPE-Runtime-*` archive with the application.
+
+Runtime packaging uses `lddtree` to follow every installed WPE library and
+subprocess recursively. Non-host dependencies such as ICU and libxml2 are
+copied into the archive with their package copyright files. The build fails if
+any dependency outside the explicit AppImage-compatible host library policy is
+not represented in the runtime archive.
 
 ## Supported baseline
 

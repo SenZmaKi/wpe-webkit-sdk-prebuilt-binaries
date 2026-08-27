@@ -74,7 +74,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
-            bison bubblewrap build-essential ccache cmake file flex gperf ninja-build pkg-config python3 ruby ruby-dev unifdef \
+            bison bubblewrap build-essential ccache cmake file flex gperf ninja-build pax-utils pkg-config python3 ruby ruby-dev unifdef \
             libatk-bridge2.0-dev libatk1.0-dev libavif-dev libegl1-mesa-dev libenchant-2-dev libepoxy-dev \
             libfontconfig1-dev libfreetype6-dev libgcrypt20-dev libglib2.0-dev \
             libharfbuzz-dev libharfbuzz-icu0 libhyphen-dev libicu-dev libjpeg-dev \
@@ -192,6 +192,7 @@ jobs:
           done < <(find /usr/local/lib \( -type f -o -type l \) \( -name 'libWPEWebKit*' -o -name 'libwpe*' -o -name 'wpe*.pc' \) -print0)
           cp -a /usr/local/libexec/wpe-webkit-2.0 "$runtime_root/usr/local/libexec/"
           cp -a /usr/local/share/wpe-webkit-2.0 "$runtime_root/usr/local/share/"
+          "$GITHUB_WORKSPACE/scripts/collect-runtime-dependencies.sh" "$runtime_root"
           find "$runtime_root" -type f -exec sh -c 'file -b "$1" | grep -q ELF && strip --strip-unneeded "$1" || true' _ {} \;
           for archive in "$sdk_archive" "$runtime_archive"; do
             root="$sdk_root"
@@ -200,7 +201,7 @@ jobs:
             (cd "$release_dir" && sha256sum "$archive" > "$archive.sha256")
             jq -n --arg webkitVersion "$WEBKIT_VERSION" --arg libwpeVersion "$LIBWPE_VERSION" --arg architecture "$ARCHITECTURE" \
               --arg kind "$([[ "$archive" == "$sdk_archive" ]] && printf sdk || printf runtime)" \
-              '{kind: $kind, webkitVersion: $webkitVersion, libwpeVersion: $libwpeVersion, architecture: $architecture, installPrefix: "/usr/local", featureProfile: "headless-no-media-no-webgl"}' \
+              '{kind: $kind, webkitVersion: $webkitVersion, libwpeVersion: $libwpeVersion, architecture: $architecture, installPrefix: "/usr/local", featureProfile: "headless-no-media-no-webgl", runtimeDependencyPolicy: "recursive-appimage-excludelist"}' \
               > "$release_dir/$archive.metadata.json"
           done
           tar -tJf "$release_dir/$sdk_archive" > "$RUNNER_TEMP/sdk-archive.list"
@@ -208,6 +209,10 @@ jobs:
           grep -q '/wpe-webkit-2.0\.pc' "$RUNNER_TEMP/sdk-archive.list"
           grep -q '/libWPEWebKit-2.0\.so' "$RUNNER_TEMP/runtime-archive.list"
           grep -q '/WPEWebProcess' "$RUNNER_TEMP/runtime-archive.list"
+          grep -q '/libicui18n\.so' "$RUNNER_TEMP/runtime-archive.list"
+          grep -q '/libicuuc\.so' "$RUNNER_TEMP/runtime-archive.list"
+          grep -q '/libicudata\.so' "$RUNNER_TEMP/runtime-archive.list"
+          grep -q '/libxml2\.so' "$RUNNER_TEMP/runtime-archive.list"
 
       - name: Upload architecture artifact
         uses: actions/upload-artifact@v4
