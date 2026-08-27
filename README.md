@@ -27,7 +27,10 @@ Runtime packaging uses `lddtree` to follow every installed WPE library and
 subprocess recursively. Non-host dependencies such as ICU and libxml2 are
 copied into the archive with their package copyright files. The build fails if
 any dependency outside the explicit AppImage-compatible host library policy is
-not represented in the runtime archive.
+not represented in the runtime archive. The GLib/GTK/libsecret/Pango/Cairo
+desktop stack is explicitly host-provided so the runtime cannot override a
+newer distribution's internally consistent desktop libraries. Every archive
+includes `bundled-libraries.txt` and `host-libraries.txt` audit manifests.
 
 ## Supported baseline
 
